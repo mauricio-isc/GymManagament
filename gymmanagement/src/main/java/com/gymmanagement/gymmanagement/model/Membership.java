@@ -29,7 +29,7 @@ public class Membership {
 
     @NotNull(message = "End date is mandatory")
     @Column(name = "end_date", nullable = false)
-    private LocalDate endDate;
+    private LocalDate endDate; //active expired y cancelled
 
     @NotNull(message = "Status is mandatory")
     @Column(nullable = false)
@@ -39,6 +39,7 @@ public class Membership {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    //constructores
     public Membership() {}
 
     public Membership(Member member, String planType, LocalDate startDate,
@@ -104,5 +105,39 @@ public class Membership {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    //metodos utilitarios
+    public boolean isActive(){
+        return "ACTIVE".equals(status) && !endDate.isBefore(LocalDate.now());
+    }
+
+    public boolean isExpired(){
+        return "EXPIRED".equals(status) || endDate.isBefore(LocalDate.now());
+    }
+
+    public boolean isCancelled(){
+        return "CANCELLED".equals(status);
+    }
+
+    public long getDaysUntilExpiration(){
+        return LocalDate.now().until(endDate).getDays();
+    }
+
+    public boolean isExpiringSoon(int daysThreshold){
+        return isActive() && getDaysUntilExpiration() <= daysThreshold;
+    }
+
+    @Override
+    public String toString(){
+        return "Membership{"+
+                "id= " + id +
+                ", member=" +(member != null ? member.getName() : "null" ) +
+                ", planType='" + planType + '\'' +
+                ", startDate=" + startDate +
+                ", endDate="+endDate +
+                ", status='" + status + '\'' +
+                ", price=" + price +
+                '?';
     }
 }

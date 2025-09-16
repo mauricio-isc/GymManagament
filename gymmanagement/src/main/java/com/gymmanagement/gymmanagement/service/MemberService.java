@@ -2,6 +2,7 @@ package com.gymmanagement.gymmanagement.service;
 
 import com.gymmanagement.gymmanagement.model.Member;
 
+import com.gymmanagement.gymmanagement.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

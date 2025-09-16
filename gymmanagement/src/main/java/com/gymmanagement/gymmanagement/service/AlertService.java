@@ -32,8 +32,16 @@ public class AlertService {
 
     //Verificar membresias que ya expiraron
     @Scheduled(cron = "0 0 8 * * ?")    //Se ejecuta todos los dias alas 9:00 AM
-    public void chechExpiredMembreships(){
+    public void checkExpiredMembreships(){
         membershipService.checkAndUpdateExpiredMemberships();
+
+        //Enviar alertas por membresias expiradas
+        List<Membership> expiredMemberships = membershipService.getMembershipsByStatus("EXPIRED");
+        for (Membership membership : expiredMemberships){
+            if (membership.getEndDate().equals(LocalDate.now().minusDays(1))) {
+                sendExpirationAlert(membership);
+            }
+        }
     }
 
     private void sendExpirationAlert(Membership membership){
@@ -43,6 +51,39 @@ public class AlertService {
                         membership.getMember().getName(),
                         membership.getPlanType(),
                         membership.getEndDate()
+        );
+
+        emailService.sendEmail(membership.getMember().getEmail(), subject, message);
+    }
+
+    private void sendExpiredAlert(Membership membership){
+        String subject = "Tu membresia ha expirado";
+        String message = String.format("Hola %s,\n\nTu membresía %s expiró el %s. Por favor, renueva tu membresía para reactivar tus beneficios.\n\nSaludos,\nEl equipo del gimnasio",
+                membership.getMember().getName(),
+                membership.getPlanType(),
+                membership.getEndDate()
+        );
+    }
+
+    //verificar membresias que expiran en diferentes rangos
+    public void checkCustomExpirationAlerts(int daysBefore){
+        List<Membership> expiringMemberships = membershipService.getExpiringMemberships(daysBefore);
+
+        for (Membership membership : expiringMemberships){
+            if (membership.getStatus().equals("ACTIVATE")){
+                sendCustomExpirationAlert(membership, daysBefore);
+            }
+        }
+    }
+
+    public void sendCustomExpirationAlert(Membership membership, int daysBefore){
+        String subject = "Recordatorio de membresia";
+        String message = String.format(
+                "Hola %s,\n\nTu membresía %s vencerá en %d días (el %s). Te recomendamos renovar a tiempo.\n\nSaludos,\nEl equipo del gimnasio",
+                membership.getMember().getName(),
+                membership.getPlanType(),
+                daysBefore,
+                membership.getEndDate()
         );
 
         emailService.sendEmail(membership.getMember().getEmail(), subject, message);
